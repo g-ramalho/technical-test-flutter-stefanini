@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:technical_test_flutter_stefanini/system_datetime.dart';
 
 void main() {
@@ -42,10 +43,11 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  final GlobalKey<_HomePageState> _homePageKey = GlobalKey();
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ClockInPage(),
+  late final List<Widget> _pages = [
+    HomePage(key: _homePageKey),
+    ClockInPage(onClockInSuccess: _handleClockInSuccess),
     const SettingsPage(),
   ];
 
@@ -53,6 +55,10 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  void _handleClockInSuccess() {
+    _homePageKey.currentState?.refresh();
   }
 
   @override
@@ -99,7 +105,8 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 class ClockInPage extends StatefulWidget {
-  const ClockInPage({super.key});
+  final VoidCallback? onClockInSuccess;
+  const ClockInPage({super.key, this.onClockInSuccess});
 
   @override
   State<ClockInPage> createState() => _ClockInPageState();
@@ -160,7 +167,10 @@ class _ClockInPageState extends State<ClockInPage> {
         _futureSystemDateTime = fetchDateTime();
       });
 
-      _futureSystemDateTime?.then((_) {}, onError: (error) {
+      _futureSystemDateTime?.then((dt) {
+        _saveClockIn(dt.asDateTime());
+        widget.onClockInSuccess?.call();
+      }, onError: (error) {
         if (mounted) {
           showDialog(
             context: context,
@@ -178,6 +188,13 @@ class _ClockInPageState extends State<ClockInPage> {
         }
       });
     }
+  }
+
+  Future<void> _saveClockIn(DateTime dt) async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> history = prefs.getStringList('clock_in_history') ?? [];
+    history.add(dt.toIso8601String());
+    await prefs.setStringList('clock_in_history', history);
   }
 
   @override
@@ -258,13 +275,100 @@ class _ClockInPageState extends State<ClockInPage> {
   }
 }
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<DateTime> _clockIns = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadClockIns();
+  }
+
+  Future<void> refresh() async {
+    await _loadClockIns();
+  }
+
+  Future<void> _loadClockIns() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> history = prefs.getStringList('clock_in_history') ?? [];
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    setState(() {
+      _clockIns = history
+          .map((e) => DateTime.parse(e))
+          .where((dt) {
+            final date = DateTime(dt.year, dt.month, dt.day);
+            return date.isAtSameMomentAs(today);
+          })
+          .toList()
+        ..sort((a, b) => a.compareTo(b)); // Sort ascending (oldest first)
+    });
+  }
+
+  Future<void> _clearHistory() async {
+    final bool? shouldClear = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Clear History'),
+        content: const Text('Are you sure you want to clear the clock-in history?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldClear == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('clock_in_history');
+      await _loadClockIns();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Home Page'),
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.topRight,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextButton(
+              onPressed: _clearHistory,
+              child: const Text('Clear History'),
+            ),
+          ),
+        ),
+        Expanded(
+          child: _clockIns.isEmpty
+              ? const Center(child: Text('No clock-ins for today'))
+              : ListView.builder(
+                  itemCount: _clockIns.length,
+                  itemBuilder: (context, index) {
+                    final dt = _clockIns[index];
+                    return ListTile(
+                      leading: const Icon(Icons.access_time),
+                      title: Text(DateFormat('HH:mm:ss').format(dt)),
+                      subtitle: Text(DateFormat('yyyy-MM-dd').format(dt)),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 }
