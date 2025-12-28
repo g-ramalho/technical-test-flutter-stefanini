@@ -19,7 +19,10 @@ class SystemDateTime {
   }
 
   DateTime asDateTime() {
-    return DateFormat("dd/MM/yyyy HH:mm:ss.S").parse(dateTimeStr);
+    if (dateTimeStr.contains(".")) {
+      return DateFormat("dd/MM/yyyy HH:mm:ss.S").parse(dateTimeStr);
+    }
+    return DateFormat("dd/MM/yyyy HH:mm:ss").parse(dateTimeStr);
   }
 }
 
