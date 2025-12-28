@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:technical_test_flutter_stefanini/system_datetime.dart';
 
 void main() {
@@ -117,7 +118,8 @@ class _ClockInPageState extends State<ClockInPage> {
         future: futureSystemDateTime,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return Text(snapshot.data!.dateTimeStr);
+            DateTime dt = snapshot.data!.asDateTime();
+            return Text(DateFormat("dd/MM/yyyy HH:mm:ss").format(dt));
           } else if (snapshot.hasError) {
             return Text('${snapshot.error}');
           }
