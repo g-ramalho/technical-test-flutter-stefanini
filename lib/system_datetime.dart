@@ -26,8 +26,8 @@ class SystemDateTime {
   }
 }
 
-Future<SystemDateTime> fetchDateTime(String apiEndpointUrl) async {
-  final Response r = await PontoCertificadoApi(apiEndpointUrl).fetchSystemTime();
+Future<SystemDateTime> fetchDateTime() async {
+  final Response r = await PontoCertificadoApi("https://wspilotomobile.pontocertificado.com.br/WcfREPV.svc/").fetchSystemTime();
 
   if (r.statusCode == 200) {
     return SystemDateTime.fromJson(jsonDecode(r.body) as Map<String, dynamic>);
