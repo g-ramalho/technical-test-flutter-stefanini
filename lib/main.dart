@@ -103,30 +103,79 @@ class ClockInPage extends StatefulWidget {
 }
 
 class _ClockInPageState extends State<ClockInPage> {
-  late Future<SystemDateTime> futureSystemDateTime;
+  Future<SystemDateTime>? _futureSystemDateTime;
 
-  @override
-  void initState() {
-    super.initState();
-    futureSystemDateTime = fetchDateTime();
+  Future<void> _handleClockIn() async {
+    final bool? shouldClockIn = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Clock In'),
+        content: const Text('Are you sure you want to clock in?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldClockIn == true) {
+      setState(() {
+        _futureSystemDateTime = fetchDateTime();
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: FutureBuilder<SystemDateTime>(
-        future: futureSystemDateTime,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            DateTime dt = snapshot.data!.asDateTime();
-            return Text(DateFormat("dd/MM/yyyy HH:mm:ss").format(dt));
-          } else if (snapshot.hasError) {
-            return Text('${snapshot.error}');
-          }
-
-          return const CircularProgressIndicator();
-        },
-      ),
+    return Column(
+      children: [
+        const SizedBox(height: 48),
+        FutureBuilder<SystemDateTime>(
+          future: _futureSystemDateTime,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const CircularProgressIndicator();
+            } else if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            } else if (snapshot.hasData) {
+              final dt = snapshot.data!.asDateTime();
+              return Text(
+                DateFormat('HH:mm:ss').format(dt),
+                style: const TextStyle(
+                  fontSize: 64,
+                  fontWeight: FontWeight.bold,
+                ),
+              );
+            }
+            return const SizedBox(height: 64);
+          },
+        ),
+        Expanded(
+          child: Center(
+            child: SizedBox(
+              width: 200,
+              height: 200,
+              child: ElevatedButton(
+                onPressed: _handleClockIn,
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(24),
+                ),
+                child: const Text(
+                  'Clock In',
+                  style: TextStyle(fontSize: 24),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
