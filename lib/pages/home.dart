@@ -98,14 +98,20 @@ class HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Align(
-          alignment: Alignment.topRight,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextButton(
-              onPressed: _clearHistory,
-              child: const Text('Clear History'),
-            ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Clock-in History",
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              TextButton(
+                onPressed: _clearHistory,
+                child: const Text('Clear History'),
+              ),
+            ],
           ),
         ),
         Expanded(

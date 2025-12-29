@@ -58,7 +58,7 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             IconButton(
               icon: Icon(
-                Icons.home,
+                Icons.history_rounded,
                 color: _selectedIndex == 0 ? Theme.of(context).colorScheme.primary : null,
               ),
               onPressed: () => _onItemTapped(0),

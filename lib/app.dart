@@ -1,10 +1,4 @@
-import 'dart:async';
-
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:technical_test_flutter_stefanini/system_datetime.dart';
 
 import 'pages/main_screen.dart';
 
