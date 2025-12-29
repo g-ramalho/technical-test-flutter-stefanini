@@ -42,7 +42,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
   final GlobalKey<_HomePageState> _homePageKey = GlobalKey();
 
   late final List<Widget> _pages = [
@@ -55,6 +55,9 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _selectedIndex = index;
     });
+    if (index == 0) {
+      _homePageKey.currentState?.refresh();
+    }
   }
 
   void _handleClockInSuccess() {
@@ -295,8 +298,34 @@ class _HomePageState extends State<HomePage> {
     await _loadClockIns();
   }
 
+  Future<void> _checkAutoClear(SharedPreferences prefs) async {
+    final bool autoClearEnabled = prefs.getBool('auto_clear_enabled') ?? false;
+    if (autoClearEnabled) {
+      final String? timeStr = prefs.getString('auto_clear_time');
+      if (timeStr != null) {
+        final parts = timeStr.split(':');
+        final clearTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+
+        final now = DateTime.now();
+        final lastClearStr = prefs.getString('last_auto_clear_date');
+        final todayStr = DateFormat('yyyy-MM-dd').format(now);
+
+        if (lastClearStr != todayStr) {
+          if (now.hour > clearTime.hour ||
+              (now.hour == clearTime.hour && now.minute >= clearTime.minute)) {
+            await prefs.remove('clock_in_history');
+            await prefs.setString('last_auto_clear_date', todayStr);
+          }
+        }
+      }
+    }
+  }
+
   Future<void> _loadClockIns() async {
     final prefs = await SharedPreferences.getInstance();
+    
+    await _checkAutoClear(prefs);
+
     final List<String> history = prefs.getStringList('clock_in_history') ?? [];
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -309,7 +338,7 @@ class _HomePageState extends State<HomePage> {
             return date.isAtSameMomentAs(today);
           })
           .toList()
-        ..sort((a, b) => a.compareTo(b)); // Sort ascending (oldest first)
+        ..sort((a, b) => a.compareTo(b));
     });
   }
 
@@ -373,13 +402,79 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool _autoClearEnabled = false;
+  TimeOfDay _autoClearTime = const TimeOfDay(hour: 0, minute: 0);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _autoClearEnabled = prefs.getBool('auto_clear_enabled') ?? false;
+      final timeStr = prefs.getString('auto_clear_time');
+      if (timeStr != null) {
+        final parts = timeStr.split(':');
+        _autoClearTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      }
+    });
+  }
+
+  Future<void> _updateAutoClearEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('auto_clear_enabled', value);
+    setState(() {
+      _autoClearEnabled = value;
+    });
+  }
+
+  Future<void> _updateAutoClearTime(TimeOfDay time) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auto_clear_time', '${time.hour}:${time.minute}');
+    setState(() {
+      _autoClearTime = time;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Settings Page'),
+    return ListView(
+      children: [
+        SwitchListTile(
+          title: const Text('Recurrent, automatic History Clearance'),
+          subtitle: const Text('Clear history automatically at a specific time'),
+          value: _autoClearEnabled,
+          onChanged: _updateAutoClearEnabled,
+        ),
+        ListTile(
+          title: const Text('Clearance Time'),
+          subtitle: Text(_autoClearTime.format(context)),
+          enabled: _autoClearEnabled,
+          trailing: const Icon(Icons.access_time),
+          onTap: _autoClearEnabled
+              ? () async {
+                  final TimeOfDay? picked = await showTimePicker(
+                    context: context,
+                    initialTime: _autoClearTime,
+                  );
+                  if (picked != null && picked != _autoClearTime) {
+                    _updateAutoClearTime(picked);
+                  }
+                }
+              : null,
+        ),
+      ],
     );
   }
 }
