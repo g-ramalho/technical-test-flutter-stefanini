@@ -51,29 +51,91 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       children: [
-        SwitchListTile(
-          title: const Text('Recurrent, automatic History Clearance'),
-          subtitle: const Text('Clear history automatically at a specific time'),
-          value: _autoClearEnabled,
-          onChanged: _updateAutoClearEnabled,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+          child: Text(
+            'AUTO CLEAR',
+            style: TextStyle(
+              fontSize: 12,
+              letterSpacing: 1.5,
+              color: Colors.grey[500],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
-        ListTile(
-          title: const Text('Clearance Time'),
-          subtitle: Text(_autoClearTime.format(context)),
-          enabled: _autoClearEnabled,
-          trailing: const Icon(Icons.access_time),
-          onTap: _autoClearEnabled
-              ? () async {
-            final TimeOfDay? picked = await showTimePicker(
-              context: context,
-              initialTime: _autoClearTime,
-            );
-            if (picked != null && picked != _autoClearTime) {
-              _updateAutoClearTime(picked);
-            }
-          }
-              : null,
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Column(
+            children: [
+              SwitchListTile(
+                title: Text(
+                  'Enable automatic clearance',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                subtitle: Text(
+                  'Clear history daily at set time',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[500],
+                  ),
+                ),
+                value: _autoClearEnabled,
+                onChanged: _updateAutoClearEnabled,
+                activeThumbColor: Colors.black87,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
+              ),
+              Divider(height: 1, color: Colors.grey[300]),
+              ListTile(
+                title: Text(
+                  'Clearance time',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: _autoClearEnabled ? Colors.grey[800] : Colors.grey[400],
+                  ),
+                ),
+                subtitle: Text(
+                  _autoClearTime.format(context),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: _autoClearEnabled ? Colors.grey[500] : Colors.grey[300],
+                  ),
+                ),
+                enabled: _autoClearEnabled,
+                trailing: Icon(
+                  Icons.access_time,
+                  size: 20,
+                  color: _autoClearEnabled ? Colors.grey[600] : Colors.grey[300],
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 4,
+                ),
+                onTap: _autoClearEnabled
+                    ? () async {
+                        final TimeOfDay? picked = await showTimePicker(
+                          context: context,
+                          initialTime: _autoClearTime,
+                        );
+                        if (picked != null && picked != _autoClearTime) {
+                          _updateAutoClearTime(picked);
+                        }
+                      }
+                    : null,
+              ),
+            ],
+          ),
         ),
       ],
     );

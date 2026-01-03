@@ -69,8 +69,8 @@ class _ClockInPageState extends State<ClockInPage> {
         _futureSystemDateTime = fetchDateTime();
       });
 
-      _futureSystemDateTime?.then((dt) {
-        _saveClockIn(dt.asDateTime());
+      _futureSystemDateTime?.then((dt) async {
+        await _saveClockIn(dt.asDateTime());
         widget.onClockInSuccess?.call();
       }, onError: (error) {
         if (mounted) {
@@ -103,12 +103,24 @@ class _ClockInPageState extends State<ClockInPage> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 48),
+        const SizedBox(height: 60),
         FutureBuilder<SystemDateTime>(
           future: _futureSystemDateTime,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const CircularProgressIndicator();
+              return SizedBox(
+                height: 100,
+                child: Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ),
+              );
             } else if (snapshot.hasData) {
               final dt = snapshot.data!.asDateTime();
               return Column(
@@ -118,20 +130,23 @@ class _ClockInPageState extends State<ClockInPage> {
                     DateFormat('HH:mm:ss').format(dt),
                     style: const TextStyle(
                       fontSize: 64,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w200,
+                      letterSpacing: 2,
                     ),
                   ),
-                  const Text(
-                    'LAST RECEIVED DATETIME',
+                  const SizedBox(height: 8),
+                  Text(
+                    'LAST SYNC',
                     style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.green,
+                      fontSize: 11,
+                      letterSpacing: 2,
+                      color: Colors.grey[500],
                     ),
                   ),
                 ],
               );
             }
-            return const SizedBox(height: 64);
+            return const SizedBox(height: 100);
           },
         ),
         Expanded(
@@ -140,31 +155,59 @@ class _ClockInPageState extends State<ClockInPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!_isConnected) ...[
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.info, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text(
-                        'There must be an active connection to clock in',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                SizedBox(
-                  width: 200,
-                  height: 200,
-                  child: ElevatedButton(
-                    onPressed: _isConnected ? _handleClockIn : null,
-                    style: ElevatedButton.styleFrom(
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(24),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
                     ),
-                    child: const Text(
-                      'Clock In',
-                      style: TextStyle(fontSize: 24),
+                    margin: const EdgeInsets.only(bottom: 40),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[400]!),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.wifi_off, size: 16, color: Colors.grey[600]),
+                        const SizedBox(width: 12),
+                        Text(
+                          'CONNECTION REQUIRED',
+                          style: TextStyle(
+                            fontSize: 12,
+                            letterSpacing: 1,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _isConnected ? Colors.black87 : Colors.grey[300]!,
+                      width: 2,
+                    ),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _isConnected ? _handleClockIn : null,
+                      customBorder: const CircleBorder(),
+                      child: Center(
+                        child: Text(
+                          'CLOCK IN',
+                          style: TextStyle(
+                            fontSize: 18,
+                            letterSpacing: 2,
+                            color: _isConnected ? Colors.black87 : Colors.grey[300],
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),

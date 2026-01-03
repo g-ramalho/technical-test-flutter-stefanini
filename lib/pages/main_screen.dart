@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'clock_in.dart';
-import 'home.dart';
+import 'history.dart';
 import 'settings.dart';
 
 class MainScreen extends StatefulWidget {
@@ -13,10 +13,10 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 1;
-  final GlobalKey<HomePageState> _homePageKey = GlobalKey();
+  final GlobalKey<HistoryPageState> _homePageKey = GlobalKey();
 
   late final List<Widget> _pages = [
-    HomePage(key: _homePageKey),
+    HistoryPage(key: _homePageKey),
     ClockInPage(onClockInSuccess: _handleClockInSuccess),
     const SettingsPage(),
   ];
@@ -37,42 +37,64 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Shift Tracker")),
+      appBar: AppBar(
+        title: const Text("SHIFT TRACKER"),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(
+            color: Colors.grey[300],
+            height: 1,
+          ),
+        ),
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        elevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        onPressed: () => _onItemTapped(1),
-        child: const Icon(Icons.assignment_ind),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.history_rounded,
-                color: _selectedIndex == 0 ? Theme.of(context).colorScheme.primary : null,
+      floatingActionButton: _selectedIndex == 1
+          ? null
+          : SizedBox(
+              width: 56,
+              height: 56,
+              child: FloatingActionButton(
+                shape: const CircleBorder(),
+                onPressed: () => _onItemTapped(1),
+                child: const Icon(Icons.access_time, size: 24),
               ),
-              onPressed: () => _onItemTapped(0),
             ),
-            IconButton(
-              icon: Icon(
-                Icons.settings,
-                color: _selectedIndex == 2 ? Theme.of(context).colorScheme.primary : null,
-              ),
-              onPressed: () => _onItemTapped(2),
-            ),
-          ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Colors.grey[300]!, width: 1),
+          ),
+        ),
+        child: BottomAppBar(
+          color: Colors.white,
+          elevation: 0,
+          shape: _selectedIndex == 1 ? null : const CircularNotchedRectangle(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.list, 0),
+              _buildNavItem(Icons.settings_outlined, 2),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, int index) {
+    final isSelected = _selectedIndex == index;
+    return IconButton(
+      icon: Icon(
+        icon,
+        color: isSelected ? Colors.black87 : Colors.grey[400],
+        size: 24,
+      ),
+      onPressed: () => _onItemTapped(index),
     );
   }
 }
