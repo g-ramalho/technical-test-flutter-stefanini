@@ -95,8 +95,24 @@ class _ClockInPageState extends State<ClockInPage> {
   Future<void> _saveClockIn(DateTime dt) async {
     final prefs = await SharedPreferences.getInstance();
     final List<String> history = prefs.getStringList('clock_in_history') ?? [];
-    history.add(dt.toIso8601String());
+    
+    // Determine the classification for this clock-in
+    final dateKey = DateFormat('yyyy-MM-dd').format(dt);
+    final todayClockIns = history
+        .map((e) => DateTime.parse(e.split('|')[0]))
+        .where((d) => DateFormat('yyyy-MM-dd').format(d) == dateKey)
+        .length;
+    
+    final classification = _getClassificationIndex(todayClockIns);
+    
+    // Store as "ISO8601|classification_index"
+    history.add('${dt.toIso8601String()}|$classification');
     await prefs.setStringList('clock_in_history', history);
+  }
+
+  int _getClassificationIndex(int orderInDay) {
+    // 0: Shift Start, 1: Lunch Start, 2: Lunch End, 3: Shift End, 4+: Additional
+    return orderInDay > 4 ? 4 : orderInDay;
   }
 
   @override

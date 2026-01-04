@@ -11,13 +11,58 @@ class HistoryPage extends StatefulWidget {
   State<HistoryPage> createState() => HistoryPageState();
 }
 
+enum ClockInType {
+  shiftStart,
+  lunchStart,
+  lunchEnd,
+  shiftEnd,
+  additional,
+}
+
+class ClockInEntry {
+  final DateTime dateTime;
+  final ClockInType type;
+
+  ClockInEntry(this.dateTime, this.type);
+}
+
 class HistoryPageState extends State<HistoryPage> {
-  List<DateTime> _clockIns = [];
+  List<ClockInEntry> _clockIns = [];
 
   @override
   void initState() {
     super.initState();
     _loadClockIns();
+  }
+
+  String _getTypeLabel(ClockInType type) {
+    switch (type) {
+      case ClockInType.shiftStart:
+        return 'Shift Start';
+      case ClockInType.lunchStart:
+        return 'Lunch Start';
+      case ClockInType.lunchEnd:
+        return 'Lunch End';
+      case ClockInType.shiftEnd:
+        return 'Shift End';
+      case ClockInType.additional:
+        return 'Additional';
+    }
+  }
+
+  MaterialColor _getTypeColor(ClockInType type) {
+    switch (type) {
+      case ClockInType.shiftStart:
+        return Colors.green;
+      case ClockInType.lunchStart:
+        return Colors.orange;
+      case ClockInType.lunchEnd:
+        return Colors.orange;
+      case ClockInType.shiftEnd:
+        return Colors.red;
+      case ClockInType.additional:
+        return Colors.grey;
+    }
   }
 
   Future<void> refresh() async {
@@ -53,16 +98,40 @@ class HistoryPageState extends State<HistoryPage> {
     await _checkAutoClear(prefs);
 
     final List<String> history = prefs.getStringList('clock_in_history') ?? [];
-    
-    // Parse and sort all entries
-    final allEntries = history
-        .map((e) => DateTime.parse(e))
-        .toList()
-      ..sort((a, b) => b.compareTo(a)); // Sort descending (newest first)
+
+    final List<ClockInEntry> classified = [];
+    for (final entry in history) {
+      try {
+        final parts = entry.split('|');
+        final dt = DateTime.parse(parts[0]);
+        final classificationIndex = int.parse(parts[1]);
+        classified.add(ClockInEntry(dt, _getClockInTypeFromIndex(classificationIndex)));
+      } catch (e) {
+        // Skip invalid entries
+        continue;
+      }
+    }
+
+    classified.sort((a, b) => b.dateTime.compareTo(a.dateTime));
 
     setState(() {
-      _clockIns = allEntries;
+      _clockIns = classified;
     });
+  }
+
+  ClockInType _getClockInTypeFromIndex(int index) {
+    switch (index) {
+      case 0:
+        return ClockInType.shiftStart;
+      case 1:
+        return ClockInType.lunchStart;
+      case 2:
+        return ClockInType.lunchEnd;
+      case 3:
+        return ClockInType.shiftEnd;
+      default:
+        return ClockInType.additional;
+    }
   }
 
   Future<void> _clearHistory() async {
@@ -150,7 +219,12 @@ class HistoryPageState extends State<HistoryPage> {
                     color: Colors.grey[200],
                   ),
                   itemBuilder: (context, index) {
-                    final dt = _clockIns[index];
+                    final entry = _clockIns[index];
+                    final dt = entry.dateTime;
+                    final type = entry.type;
+                    final color = _getTypeColor(type);
+                    final label = _getTypeLabel(type);
+                    
                     return Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -161,30 +235,63 @@ class HistoryPageState extends State<HistoryPage> {
                           Container(
                             width: 4,
                             height: 40,
-                            color: Colors.black87,
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
                           const SizedBox(width: 20),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                DateFormat('HH:mm:ss').format(dt),
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w300,
-                                  letterSpacing: 0.5,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      DateFormat('HH:mm:ss').format(dt),
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w300,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: color.shade50,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: color.shade200,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        label,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: color.shade700,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                DateFormat('yyyy-MM-dd').format(dt),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[500],
-                                  letterSpacing: 0.5,
+                                const SizedBox(height: 4),
+                                Text(
+                                  DateFormat('yyyy-MM-dd').format(dt),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[500],
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
