@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:technical_test_flutter_stefanini/pages/shift_reminder.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -93,6 +94,45 @@ class _SettingsPageState extends State<SettingsPage> {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8),
       children: [
+        Container(
+          margin: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: ListTile(
+            title: Text(
+              'Shift Reminders',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey[800],
+              ),
+            ),
+            subtitle: Text(
+              'Configure clock-in notifications',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[500],
+              ),
+            ),
+            trailing: Icon(
+              Icons.chevron_right,
+              size: 20,
+              color: Colors.grey[600],
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 4,
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ShiftReminderPage(),
+                ),
+              );
+            },
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
           child: Text(

@@ -3,20 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:technical_test_flutter_stefanini/models/clock_in_type.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
 
   @override
   State<HistoryPage> createState() => HistoryPageState();
-}
-
-enum ClockInType {
-  shiftStart,
-  lunchStart,
-  lunchEnd,
-  shiftEnd,
-  additional,
 }
 
 class ClockInEntry {
@@ -36,18 +29,7 @@ class HistoryPageState extends State<HistoryPage> {
   }
 
   String _getTypeLabel(ClockInType type) {
-    switch (type) {
-      case ClockInType.shiftStart:
-        return 'Shift Start';
-      case ClockInType.lunchStart:
-        return 'Lunch Start';
-      case ClockInType.lunchEnd:
-        return 'Lunch End';
-      case ClockInType.shiftEnd:
-        return 'Shift End';
-      case ClockInType.additional:
-        return 'Additional';
-    }
+    return type.label;
   }
 
   MaterialColor _getTypeColor(ClockInType type) {
@@ -120,18 +102,7 @@ class HistoryPageState extends State<HistoryPage> {
   }
 
   ClockInType _getClockInTypeFromIndex(int index) {
-    switch (index) {
-      case 0:
-        return ClockInType.shiftStart;
-      case 1:
-        return ClockInType.lunchStart;
-      case 2:
-        return ClockInType.lunchEnd;
-      case 3:
-        return ClockInType.shiftEnd;
-      default:
-        return ClockInType.additional;
-    }
+    return ClockInTypeExtension.fromIndex(index);
   }
 
   Future<void> _clearHistory() async {

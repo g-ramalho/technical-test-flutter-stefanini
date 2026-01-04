@@ -17,7 +17,7 @@ class ClockInPage extends StatefulWidget {
 class _ClockInPageState extends State<ClockInPage> {
   Future<SystemDateTime>? _futureSystemDateTime;
   bool _isConnected = true;
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   @override
   void initState() {
@@ -37,10 +37,10 @@ class _ClockInPageState extends State<ClockInPage> {
     _updateConnectionStatus(result);
   }
 
-  void _updateConnectionStatus(ConnectivityResult result) {
+  void _updateConnectionStatus(List<ConnectivityResult> results) {
     if (mounted) {
       setState(() {
-        _isConnected = result != ConnectivityResult.none;
+        _isConnected = !results.contains(ConnectivityResult.none);
       });
     }
   }
