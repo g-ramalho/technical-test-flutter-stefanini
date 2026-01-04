@@ -48,6 +48,46 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
+  Future<void> _resetPreferences() async {
+    final bool? shouldReset = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset All Settings'),
+        content: const Text(
+          'This will reset all settings to defaults and clear all clock-in history. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Reset'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldReset == true) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+      await _loadSettings();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('All settings have been reset to defaults'),
+            backgroundColor: Colors.grey[800],
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -135,6 +175,51 @@ class _SettingsPageState extends State<SettingsPage> {
                     : null,
               ),
             ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
+          child: Text(
+            'DANGER ZONE',
+            style: TextStyle(
+              fontSize: 12,
+              letterSpacing: 1.5,
+              color: Colors.red[400],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.red[300]!),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: ListTile(
+            title: Text(
+              'Reset all settings',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.red[700],
+              ),
+            ),
+            subtitle: Text(
+              'Clear all data and return to defaults',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.red[400],
+              ),
+            ),
+            trailing: Icon(
+              Icons.warning_amber_rounded,
+              size: 20,
+              color: Colors.red[600],
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 4,
+            ),
+            onTap: _resetPreferences,
           ),
         ),
       ],
