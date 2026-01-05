@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/technical-test-flutter-stefanini.iml" filepath="$PROJECT_DIR$/.idea/technical-test-flutter-stefanini.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/ShiftTracker.iml" filepath="$PROJECT_DIR$/.idea/ShiftTracker.iml" />
     </modules>
   </component>
 </project>

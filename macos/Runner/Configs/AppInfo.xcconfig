@@ -5,7 +5,7 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = technical_test_flutter_stefanini
+PRODUCT_NAME = ShiftTracker
 
 // The application's bundle identifier
 PRODUCT_BUNDLE_IDENTIFIER = com.example.technicalTestFlutterStefanini
